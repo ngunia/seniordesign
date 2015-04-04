@@ -29,7 +29,8 @@ src/main.o: ../src/main.c ../system/include/DEVICE/misc.h \
  ../system/include/DEVICE/stm32f4xx_can.h \
  ../system/include/DEVICE/stm32f4xx_dac.h \
  ../system/include/DEVICE/stm32f4xx_dcmi.h \
- ../system/include/DEVICE/stm32f4xx_fsmc.h
+ ../system/include/DEVICE/stm32f4xx_fsmc.h ../src/tm_stm32f4_hd44780.h \
+ ../src/tm_stm32f4_delay.h
 
 ../system/include/DEVICE/misc.h:
 
@@ -96,3 +97,7 @@ src/main.o: ../src/main.c ../system/include/DEVICE/misc.h \
 ../system/include/DEVICE/stm32f4xx_dcmi.h:
 
 ../system/include/DEVICE/stm32f4xx_fsmc.h:
+
+../src/tm_stm32f4_hd44780.h:
+
+../src/tm_stm32f4_delay.h:
