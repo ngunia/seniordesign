@@ -241,10 +241,10 @@ uint16_t delay(uint16_t currSamp)
 	if(++buffInd >= BUFF_SIZE)
 		buffInd = 0;
 
-	float currSampF = ((float)currSamp)/4095.0f;
-	float delSampF = ((float)delayBuff[delInd])/4095.0f;
+	float currSampF = (float)currSamp;
+	float delSampF = (float)delayBuff[delInd];
 
-	return (uint16_t)(0.5*4095.0*currSampF + 0.5*4095.0*delSampF); // dry mix + wet mix
+	return (uint16_t)(4095.0 * (0.5*currSampF + 0.5*delSampF) ); // dry mix + wet mix
 
 }
 
