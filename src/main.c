@@ -2,7 +2,6 @@
 // This file is part of the GNU ARM Eclipse Plug-ins project.
 // Copyright (c) 2014 Liviu Ionescu.
 //
-
 // ----------------------------------------------------------------------------
 
 // Sample pragmas to cope with warnings. Please note the related line at
