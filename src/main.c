@@ -23,10 +23,10 @@ void TimerInit(void);
 void EnableTimerInterrupt(void);
 void ADCInit(void);
 void DACInit(void);
-void readPotsInit(void);
+void init_pots(void);
 uint16_t delay(uint16_t);
 void num2Str(char*, uint16_t);
-void displayPots(void);
+void display_pots(void);
 
 /* for delay effect test*/
 #define FS 48000
@@ -39,43 +39,34 @@ uint16_t pot[5] = {0,0,0,0,0};
 
 int main (int argc, char* argv[])
 {
-	// Normally at this stage most of the microcontroller subsystems, including
-	// the clock, were initialised by the CMSIS SystemInit() function invoked
-	// from the startup file, before calling main().
-	// (see system/src/cortexm/_initialize_hardware.c)
-	// If further initialisations are required, customise __initialize_hardware()
-	// or add the additional initialisation here, for example:
-
 	// Initialization
 	RCCInit();
-
 	TM_HD44780_Init(16, 2);
-	//TM_HD44780_Puts(1, 0, "blah");
-
 	EnableTimerInterrupt();
 	GPIOInit();
 	TimerInit();
 	ADCInit();
 	DACInit();
-	readPotsInit();
-	// Infinite loop
-	//uint32_t inc = 0;
+	init_pots();
 
+	// TODO: move this somewhere more appropriate, make names configurable?
 	TM_HD44780_Puts(0, 0, "AAA:");
 	TM_HD44780_Puts(4, 0, "BBB:");
 	TM_HD44780_Puts(8, 0, "CCC:");
 	TM_HD44780_Puts(12, 0, "DDD:");
 
-
 	while (1)
 	{
-		displayPots();
-		Delayms(300);
+		display_pots();
 	}
 	// Infinite loop, never return.
 }
 
-void displayPots(void) {
+void display_pots(void) {
+	// TODO add one for expression pedal..
+
+	static uint8_t count = 0;
+
 	// strings to hold values
 	static char pot0Str[4];
 	static char pot1Str[4];
@@ -99,6 +90,8 @@ void displayPots(void) {
 	TM_HD44780_Puts(5, 1, pot1Str);
 	TM_HD44780_Puts(9, 1, pot2Str);
 	TM_HD44780_Puts(13, 1, pot3Str);
+
+	count++;
 }
 
 // converts a uint16_t to a char* for printing
@@ -111,7 +104,7 @@ void num2Str(char *res, uint16_t val) {
 		if (i < 2 && (rem == 0 && newVal == 0)) { // remove leading zero(s)
 			res[i] = ' ';
 		} else {// convert digit 0-9 as int to corresponding ascii char
-			res[i] = (char)(((int)'0')+(rem));
+			res[i] = (char)((int)'0'+rem);
 		}
 		val = newVal;
 	}
@@ -138,15 +131,6 @@ void GPIOInit(void)
 {
 	GPIO_InitTypeDef GPIO_init_structure;
 
-//	// ADC LED/Test GPIO
-//	GPIO_StructInit(&GPIO_init_structure);
-//	GPIO_init_structure.GPIO_Mode  = GPIO_Mode_OUT;
-//	GPIO_init_structure.GPIO_OType = GPIO_OType_PP;
-//	GPIO_init_structure.GPIO_Pin   = GPIO_Pin_1; // C1
-//	GPIO_init_structure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-//	GPIO_init_structure.GPIO_Speed = GPIO_Medium_Speed;
-//	GPIO_Init(GPIOC, &GPIO_init_structure);
-
 	// DAC GPIO
 	/* Once the DAC channel is enabled, the corresponding GPIO pin is automatically
 	connected to the DAC converter. In order to avoid parasitic consumption,
@@ -169,7 +153,7 @@ void GPIOInit(void)
 void TimerInit(void)
 {
 	TIM_TimeBaseInitTypeDef TIM3_TimeBase;
-
+	// TODO: remove unused speeds or make configurable with an enum
 	TIM3_TimeBase.TIM_Period        = (uint16_t)209;  // Trigger = CK_CNT/(Period+1) = 200 kHz
 	TIM3_TimeBase.TIM_Prescaler     = 1;          	  // CK_CNT = 42MHz/Prescaler = 42 Mhz
 //
@@ -181,7 +165,6 @@ void TimerInit(void)
 //
 //	TIM3_TimeBase.TIM_Period        = (uint16_t)135; // Trigger = CK_CNT/(Period+1) = 44.117 kHz
 //	TIM3_TimeBase.TIM_Prescaler     = 7;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
-
 //	TIM3_TimeBase.TIM_Period        = (uint16_t)1049;  // Trigger = CK_CNT/(Period+1) = 48 kHz
 //	TIM3_TimeBase.TIM_Prescaler     = 40000;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
 
@@ -204,7 +187,7 @@ void EnableTimerInterrupt(void)
     nvicStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvicStructure);
 
-	// this should enable all ADCS to be triggered, if I understand correctly
+	// enable all ADCS to be triggered
     nvicStructure.NVIC_IRQChannel    = ADC_IRQn;
     nvicStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&nvicStructure);
@@ -213,14 +196,6 @@ void EnableTimerInterrupt(void)
 // interrupt where ADC read, DAC write occurs
 void ADC_IRQHandler(void) // (for testing)
 {
-
-  /* scale signal by 1.5 (testing floats)
-  float adcVal = (float)ADC_GetConversionValue(ADC1);
-  uint16_t outVal = (uint16_t)(adcVal*1.5);
-
-  DAC_SetChannel1Data(DAC_Align_12b_R, outVal);
-  ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
-  */
   //DAC_SetChannel1Data(DAC_Align_12b_R, delay( ADC_GetConversionValue(ADC1) ) );
   DAC_SetChannel1Data(DAC_Align_12b_R, ADC_GetConversionValue(ADC1) );
   ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
@@ -288,7 +263,7 @@ void DACInit(void)
 	DAC_Cmd(DAC_Channel_1, ENABLE);
 }
 
-void readPotsInit(void) {
+void init_pots(void) {
 	ADC_InitTypeDef ADC_InitStruct;
 	ADC_CommonInitTypeDef ADC_CommonInitStruct;
 	DMA_InitTypeDef DMA_InitStruct;

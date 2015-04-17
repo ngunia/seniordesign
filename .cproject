@@ -133,7 +133,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="setup_hardware.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry excluding="src/DEVICE/stm32f4xx_dcmi.c|src/DEVICE/stm32f4xx_wwdg.c|src/DEVICE/stm32f4xx_usart.c|src/DEVICE/stm32f4xx_spi.c|src/DEVICE/stm32f4xx_sdio.c|src/DEVICE/stm32f4xx_sai.c|src/DEVICE/stm32f4xx_rng.c|src/DEVICE/stm32f4xx_ltdc.c|src/DEVICE/stm32f4xx_iwdg.c|src/DEVICE/stm32f4xx_i2c.c|src/DEVICE/stm32f4xx_hash.c|src/DEVICE/stm32f4xx_hash_sha1.c|src/DEVICE/stm32f4xx_hash_md5.c|src/DEVICE/stm32f4xx_fsmc.c|src/DEVICE/stm32f4xx_fmc.c|src/DEVICE/stm32f4xx_flash.c|src/DEVICE/stm32f4xx_flash_ramfunc.c|src/DEVICE/stm32f4xx_dma2d.c|src/DEVICE/stm32f4xx_dbgmcu.c|src/DEVICE/stm32f4xx_cryp.c|src/DEVICE/stm32f4xx_cryp_tdes.c|src/DEVICE/stm32f4xx_cryp_des.c|src/DEVICE/stm32f4xx_cryp_aes.c|src/DEVICE/stm32f4xx_crc.c|src/DEVICE/stm32f4xx_can.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="system"/>
 					</sourceEntries>
 				</configuration>
@@ -273,7 +273,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="setup_hardware.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 						<entry excluding="src/DEVICE/stm32f4xx_dcmi.c|src/DEVICE/stm32f4xx_wwdg.c|src/DEVICE/stm32f4xx_usart.c|src/DEVICE/stm32f4xx_spi.c|src/DEVICE/stm32f4xx_sdio.c|src/DEVICE/stm32f4xx_sai.c|src/DEVICE/stm32f4xx_rng.c|src/DEVICE/stm32f4xx_ltdc.c|src/DEVICE/stm32f4xx_iwdg.c|src/DEVICE/stm32f4xx_i2c.c|src/DEVICE/stm32f4xx_hash.c|src/DEVICE/stm32f4xx_hash_sha1.c|src/DEVICE/stm32f4xx_hash_md5.c|src/DEVICE/stm32f4xx_fsmc.c|src/DEVICE/stm32f4xx_fmc.c|src/DEVICE/stm32f4xx_flash.c|src/DEVICE/stm32f4xx_flash_ramfunc.c|src/DEVICE/stm32f4xx_dma2d.c|src/DEVICE/stm32f4xx_dbgmcu.c|src/DEVICE/stm32f4xx_cryp.c|src/DEVICE/stm32f4xx_cryp_tdes.c|src/DEVICE/stm32f4xx_cryp_des.c|src/DEVICE/stm32f4xx_cryp_aes.c|src/DEVICE/stm32f4xx_crc.c|src/DEVICE/stm32f4xx_can.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="system"/>
 					</sourceEntries>
 				</configuration>
