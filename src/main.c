@@ -1,6 +1,4 @@
-//
-// This file is part of the GNU ARM Eclipse Plug-ins project.
-// Copyright (c) 2014 Liviu Ionescu.
+// Drexel University ECE Senior Design Team 6: Programmable Digital Audio Effect Processor
 //
 // ----------------------------------------------------------------------------
 
@@ -49,7 +47,7 @@ int main (int argc, char* argv[])
 	DACInit();
 	init_pots();
 
-	// TODO: move this somewhere more appropriate, make names configurable?
+	// TODO: move this somewhere more appropriate, make names configurable
 	TM_HD44780_Puts(0, 0, "AAA:");
 	TM_HD44780_Puts(4, 0, "BBB:");
 	TM_HD44780_Puts(8, 0, "CCC:");
@@ -64,7 +62,7 @@ int main (int argc, char* argv[])
 
 void display_pots(void) {
 	// TODO add one for expression pedal..
-
+	// TODO stabilize the values
 	static uint8_t count = 0;
 
 	// strings to hold values
@@ -269,7 +267,7 @@ void init_pots(void) {
 	DMA_InitTypeDef DMA_InitStruct;
 	GPIO_InitTypeDef GPIO_InitStruct;
 
-	/* DMA2 Stream0 channel0 configuration **************************************/
+	/* DMA2 Stream0 channel0 configuration */
 	DMA_InitStruct.DMA_Channel = DMA_Channel_2;
 	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&ADC3->DR;//ADC3's data register
 	DMA_InitStruct.DMA_Memory0BaseAddr = (uint32_t)&pot;
@@ -288,7 +286,7 @@ void init_pots(void) {
 	DMA_Init(DMA2_Stream0, &DMA_InitStruct);
 	DMA_Cmd(DMA2_Stream0, ENABLE);
 
-	/* Configure GPIO pins ******************************************************/
+	/* Configure GPIO pins */
 	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;// PC0, PC1, PC2, PC3
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AN;//The pins are configured in analog mode
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL ;//We don't need any pull up or pull down
@@ -296,14 +294,14 @@ void init_pots(void) {
 	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;//PA0
 	GPIO_Init(GPIOA, &GPIO_InitStruct);//Initialize GPIOA pins with the configuration
 
-	/* ADC Common Init **********************************************************/
+	/* ADC Common Init */
 	ADC_CommonInitStruct.ADC_Mode = ADC_Mode_Independent;
 	ADC_CommonInitStruct.ADC_Prescaler = ADC_Prescaler_Div2;
 	ADC_CommonInitStruct.ADC_DMAAccessMode = ADC_DMAAccessMode_Disabled;
 	ADC_CommonInitStruct.ADC_TwoSamplingDelay = ADC_TwoSamplingDelay_5Cycles;
 	ADC_CommonInit(&ADC_CommonInitStruct);
 
-	/* ADC3 Init ****************************************************************/
+	/* ADC3 Init */
 	ADC_DeInit();
 	ADC_InitStruct.ADC_Resolution = ADC_Resolution_12b;//Input voltage is converted into a 12bit int (max 4095)
 	ADC_InitStruct.ADC_ScanConvMode = ENABLE;//The scan is configured in multiple channels
@@ -314,7 +312,7 @@ void init_pots(void) {
 	ADC_InitStruct.ADC_NbrOfConversion = 5;
 	ADC_Init(ADC3, &ADC_InitStruct);//Initialize ADC with the configuration
 
-	/* Select the channels to be read from **************************************/
+	/* Select the channels to be read from */
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_10, 1, ADC_SampleTime_144Cycles);//PC0
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_11, 2, ADC_SampleTime_144Cycles);//PC1
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 3, ADC_SampleTime_144Cycles);//PC2
