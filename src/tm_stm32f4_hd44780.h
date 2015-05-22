@@ -101,40 +101,40 @@
 /* Control pins, can be overwritten */
 /* RS - Register select pin */
 #ifndef TM_HD44780_RS_PIN
-#define TM_HD44780_RS_RCC				RCC_AHB1Periph_GPIOB
-#define TM_HD44780_RS_PORT				GPIOB
-#define TM_HD44780_RS_PIN				GPIO_Pin_15
+#define TM_HD44780_RS_RCC				RCC_AHB1Periph_GPIOC
+#define TM_HD44780_RS_PORT				GPIOC
+#define TM_HD44780_RS_PIN				GPIO_Pin_9 // TODO floating on PCB
 #endif
 /* E - Enable pin */
 #ifndef TM_HD44780_E_PIN
-#define TM_HD44780_E_RCC				RCC_AHB1Periph_GPIOB
-#define TM_HD44780_E_PORT				GPIOB
-#define TM_HD44780_E_PIN				GPIO_Pin_14
+#define TM_HD44780_E_RCC				RCC_AHB1Periph_GPIOC
+#define TM_HD44780_E_PORT				GPIOC
+#define TM_HD44780_E_PIN				GPIO_Pin_8
 #endif
 /* Data pins */
 /* D4 - Data 4 pin */
 #ifndef TM_HD44780_D4_PIN
 #define TM_HD44780_D4_RCC				RCC_AHB1Periph_GPIOC
 #define TM_HD44780_D4_PORT				GPIOC
-#define TM_HD44780_D4_PIN				GPIO_Pin_9
+#define TM_HD44780_D4_PIN				GPIO_Pin_7
 #endif
 /* D5 - Data 5 pin */
 #ifndef TM_HD44780_D5_PIN
 #define TM_HD44780_D5_RCC				RCC_AHB1Periph_GPIOC
 #define TM_HD44780_D5_PORT				GPIOC
-#define TM_HD44780_D5_PIN				GPIO_Pin_8
+#define TM_HD44780_D5_PIN				GPIO_Pin_6
 #endif
 /* D6 - Data 6 pin */
 #ifndef TM_HD44780_D6_PIN
-#define TM_HD44780_D6_RCC				RCC_AHB1Periph_GPIOC
-#define TM_HD44780_D6_PORT				GPIOC
-#define TM_HD44780_D6_PIN				GPIO_Pin_7
+#define TM_HD44780_D6_RCC				RCC_AHB1Periph_GPIOB
+#define TM_HD44780_D6_PORT				GPIOB
+#define TM_HD44780_D6_PIN				GPIO_Pin_15
 #endif
 /* D7 - Data 7 pin */
 #ifndef TM_HD44780_D7_PIN
-#define TM_HD44780_D7_RCC				RCC_AHB1Periph_GPIOC
-#define TM_HD44780_D7_PORT				GPIOC
-#define TM_HD44780_D7_PIN				GPIO_Pin_6
+#define TM_HD44780_D7_RCC				RCC_AHB1Periph_GPIOB
+#define TM_HD44780_D7_PORT				GPIOB
+#define TM_HD44780_D7_PIN				GPIO_Pin_14
 #endif
 
 #define TM_HD44780_RS_LOW				GPIO_WriteBit(TM_HD44780_RS_PORT, TM_HD44780_RS_PIN, Bit_RESET)

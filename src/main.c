@@ -13,23 +13,29 @@
 #include "misc.h"
 #include "stm32f4xx.h"
 #include "tm_stm32f4_hd44780.h"
+#include "lut.h"
 
 //Function prototypes
+// peripherals
 void RCCInit(void);
 void GPIOInit(void);
 void TimerInit(void);
 void EnableTimerInterrupt(void);
 void ADCInit(void);
 void DACInit(void);
+// LCD
 void init_pots(void);
-uint16_t delay(uint16_t);
 void num2Str(char*, uint16_t);
 void display_pots(void);
+// effects
+uint16_t delay(uint16_t);
+uint16_t overdrive(uint16_t);
 
 /* for delay effect test*/
-#define FS 48000
-#define DEL_TIME 500 // ms
-#define BUFF_SIZE (FS*DEL_TIME/1000)
+//#define FS 48000
+//#define DEL_TIME 250 // ms
+//#define BUFF_SIZE ((FS*DEL_TIME)/1000)
+#define BUFF_SIZE 60000
 uint16_t delayBuff[BUFF_SIZE];
 
 // holds pot values
@@ -39,26 +45,32 @@ int main (int argc, char* argv[])
 {
 	// Initialization
 	RCCInit();
-	TM_HD44780_Init(16, 2);
+	//TM_HD44780_Init(16, 2);
 	EnableTimerInterrupt();
 	GPIOInit();
+	//GPIO_ResetBits(GPIOA, GPIO_Pin_3);
 	TimerInit();
 	ADCInit();
 	DACInit();
-	init_pots();
+	//init_pots();
 
 	// TODO: move this somewhere more appropriate, make names configurable
+	/*
 	TM_HD44780_Puts(0, 0, "AAA:");
 	TM_HD44780_Puts(4, 0, "BBB:");
 	TM_HD44780_Puts(8, 0, "CCC:");
 	TM_HD44780_Puts(12, 0, "DDD:");
+	*/
+
+	//GPIO_SetBits(GPIOA, GPIO_Pin_3);
 
 	while (1)
 	{
-		display_pots();
+		//display_pots();
 	}
 	// Infinite loop, never return.
 }
+
 
 void display_pots(void) {
 	// TODO add one for expression pedal..
@@ -92,6 +104,7 @@ void display_pots(void) {
 	count++;
 }
 
+
 // converts a uint16_t to a char* for printing
 void num2Str(char *res, uint16_t val) {
 	res[3] = '\0'; // null terminate the string
@@ -108,6 +121,7 @@ void num2Str(char *res, uint16_t val) {
 	}
 }
 
+
 // Initialize clocking
 void RCCInit(void)
 {
@@ -123,6 +137,7 @@ void RCCInit(void)
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 }
+
 
 // Initialize GPIOs
 void GPIOInit(void)
@@ -141,8 +156,15 @@ void GPIOInit(void)
 
 	// ADC GPIO
 	GPIO_StructInit(&GPIO_init_structure);
-	GPIO_init_structure.GPIO_Pin =  GPIO_Pin_7;// A7
+	GPIO_init_structure.GPIO_Pin =  GPIO_Pin_6;// A6
 	GPIO_init_structure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_init_structure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOA, &GPIO_init_structure);
+
+	// init complete pin
+	GPIO_StructInit(&GPIO_init_structure);
+	GPIO_init_structure.GPIO_Pin =  GPIO_Pin_1;// A3
+	GPIO_init_structure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_init_structure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOA, &GPIO_init_structure);
 }
@@ -151,25 +173,40 @@ void GPIOInit(void)
 void TimerInit(void)
 {
 	TIM_TimeBaseInitTypeDef TIM3_TimeBase;
+	TIM_TimeBaseStructInit(&TIM3_TimeBase);
 	// TODO: remove unused speeds or make configurable with an enum
-	TIM3_TimeBase.TIM_Period        = (uint16_t)209;  // Trigger = CK_CNT/(Period+1) = 200 kHz
-	TIM3_TimeBase.TIM_Prescaler     = 1;          	  // CK_CNT = 42MHz/Prescaler = 42 Mhz
+
+	// going for it
+  //TIM3_TimeBase.TIM_Period        = (uint16_t)1;  // Trigger = CK_CNT/(Period+1) = 21 MHz
+  //TIM3_TimeBase.TIM_Prescaler     = 1;          	  // CK_CNT = 42MHz/Prescaler = 42 Mhz
+
+	//TIM3_TimeBase.TIM_Period        = (uint16_t)209;  // Trigger = CK_CNT/(Period+1) = 200 kHz
+	//TIM3_TimeBase.TIM_Prescaler     = 0;          	  // CK_CNT = 42MHz/Prescaler = 42 Mhz
 //
 //	TIM3_TimeBase.TIM_Period        = (uint16_t)61;   // Trigger = CK_CNT/(Period+1) = 96.774 kHz
 //	TIM3_TimeBase.TIM_Prescaler     = 7;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
 //
-//	TIM3_TimeBase.TIM_Period        = (uint16_t)124;  // Trigger = CK_CNT/(Period+1) = 48 kHz
-//	TIM3_TimeBase.TIM_Prescaler     = 7;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
+	//TIM3_TimeBase.TIM_Period        = (uint16_t)124;  // Trigger = CK_CNT/(Period+1) = 48 kHz
+	//TIM3_TimeBase.TIM_Prescaler     = 6;          	  // CK_CNT = 42MHz/(Prescaler+1) = 6 Mhz
 //
 //	TIM3_TimeBase.TIM_Period        = (uint16_t)135; // Trigger = CK_CNT/(Period+1) = 44.117 kHz
 //	TIM3_TimeBase.TIM_Prescaler     = 7;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
-//	TIM3_TimeBase.TIM_Period        = (uint16_t)1049;  // Trigger = CK_CNT/(Period+1) = 48 kHz
-//	TIM3_TimeBase.TIM_Prescaler     = 40000;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
+
+	TIM3_TimeBase.TIM_Period        = (uint16_t)15;  // Trigger = CK_CNT/(Period+1) = 48 kHz
+	TIM3_TimeBase.TIM_Prescaler     = 3;          	  // CK_CNT = 42MHz/(Prescaler+1) = 6 Mhz
 
 	TIM3_TimeBase.TIM_ClockDivision = 0;
 	TIM3_TimeBase.TIM_CounterMode   = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(TIM3, &TIM3_TimeBase);
 	TIM_SelectOutputTrigger(TIM3, TIM_TRGOSource_Update);
+
+	// Set up TIM3 interrupt
+	NVIC_InitTypeDef nvicStructure;
+	nvicStructure.NVIC_IRQChannel = TIM3_IRQn;
+	nvicStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	nvicStructure.NVIC_IRQChannelSubPriority = 0;
+	nvicStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&nvicStructure);
 
 	TIM_Cmd(TIM3, ENABLE);
 }
@@ -179,12 +216,6 @@ void EnableTimerInterrupt(void)
 {
     NVIC_InitTypeDef nvicStructure;
 
-    nvicStructure.NVIC_IRQChannel = TIM2_IRQn;
-    nvicStructure.NVIC_IRQChannelPreemptionPriority = 0;
-    nvicStructure.NVIC_IRQChannelSubPriority = 1;
-    nvicStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&nvicStructure);
-
 	// enable all ADCS to be triggered
     nvicStructure.NVIC_IRQChannel    = ADC_IRQn;
     nvicStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -192,33 +223,41 @@ void EnableTimerInterrupt(void)
 }
 
 // interrupt where ADC read, DAC write occurs
-void ADC_IRQHandler(void) // (for testing)
+void ADC_IRQHandler(void)
 {
-  //DAC_SetChannel1Data(DAC_Align_12b_R, delay( ADC_GetConversionValue(ADC1) ) );
-  DAC_SetChannel1Data(DAC_Align_12b_R, ADC_GetConversionValue(ADC1) );
+  DAC_SetChannel1Data(DAC_Align_12b_R, delay( ADC_GetConversionValue(ADC1) ) );
+  //DAC_SetChannel1Data(DAC_Align_12b_R, overdrive( ADC_GetConversionValue(ADC1) ) );
+  //DAC_SetChannel1Data(DAC_Align_12b_R, ADC_GetConversionValue(ADC1) );
   ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 }
 
+
 uint16_t delay(uint16_t currSamp)
 {
+    const float feedback_degree = 0.7f; //how much of the previous do you want to keep?
+    const float mix = 0.5f;
 	static uint16_t buffInd = 0;
-	uint16_t delaySamples = 12000;   // 250*FS/1000
-	delayBuff[buffInd] = currSamp;
 
-	int delInd = buffInd-delaySamples;
+    //calculate value
+    float prev = (float)delayBuff[buffInd];
+    float curr = (float)currSamp;
+	delayBuff[buffInd] = (uint16_t)((feedback_degree * prev) + ((1-feedback_degree) * curr));
+    //uint16_t ret = delayBuff[buffInd];
 
-	if(delInd < 0)
-		delInd = BUFF_SIZE + delInd; // actually subtraction
+    uint16_t ret = (uint16_t)((mix * delayBuff[buffInd]) + ((1-mix) * curr));
 
-	if(++buffInd >= BUFF_SIZE)
-		buffInd = 0;
+    //if you want to cut down the buffer size, change from BUFF_SIZE to the new buffer size
+    buffInd = (buffInd+1) % BUFF_SIZE; //move to next buffer spot
 
-	float currSampF = (float)currSamp;
-	float delSampF = (float)delayBuff[delInd];
-
-	return (uint16_t)(4095.0 * (0.5*currSampF + 0.5*delSampF) ); // dry mix + wet mix
-
+    return ret;
 }
+
+
+uint16_t overdrive(uint16_t currSamp) {
+	return (2*overdrive_lut[currSamp]/3) + (1*currSamp/3) ;
+	//return currSamp;
+}
+
 
 // Function for intializing the ADC
 void ADCInit(void)
@@ -242,8 +281,8 @@ void ADCInit(void)
 	ADC_INIT.ADC_NbrOfConversion      = 1;
 	ADC_Init(ADC1, &ADC_INIT);
 
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 1, ADC_SampleTime_3Cycles);
-	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);      // (for testing)
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 1, ADC_SampleTime_28Cycles);
+	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 	ADC_Cmd(ADC1, ENABLE);
 }
 
@@ -252,7 +291,7 @@ void DACInit(void)
 {
 	DAC_InitTypeDef DAC_init_structure;
 
-	DAC_init_structure.DAC_Trigger = DAC_Trigger_None ;
+	DAC_init_structure.DAC_Trigger = DAC_Trigger_None;
 	DAC_init_structure.DAC_WaveGeneration = DAC_WaveGeneration_None;
 	DAC_init_structure.DAC_OutputBuffer = DAC_OutputBuffer_Enable;
 	DAC_Init(DAC_Channel_1, &DAC_init_structure);
@@ -260,6 +299,7 @@ void DACInit(void)
      automatically connected to the DAC converter. */
 	DAC_Cmd(DAC_Channel_1, ENABLE);
 }
+
 
 void init_pots(void) {
 	ADC_InitTypeDef ADC_InitStruct;
@@ -327,10 +367,17 @@ void init_pots(void) {
 
 	/* Enable ADC3 */
 	ADC_Cmd(ADC3, ENABLE);
+	// TODO disable ADC3 from triggering interrupt and messing with audio processing?
+	//ADC_ITConfig(ADC3, ADC_IT_EOC, DISABLE);
+	//ADC_ITConfig(ADC3, ADC_IT_AWD, DISABLE);
+	//ADC_ITConfig(ADC3, ADC_IT_JEOC, DISABLE);
+	ADC_ITConfig(ADC3, ADC_IT_OVR, DISABLE);
+
 
 	/* Start ADC3 Software Conversion */
 	ADC_SoftwareStartConv(ADC3);
 }
+
 
 #pragma GCC diagnostic pop
 
