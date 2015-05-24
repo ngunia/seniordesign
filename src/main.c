@@ -20,7 +20,7 @@
 void RCCInit(void);
 void GPIOInit(void);
 void TimerInit(void);
-void EnableTimerInterrupt(void);
+void EnableADCInterrupt(void);
 void ADCInit(void);
 void DACInit(void);
 // LCD
@@ -45,14 +45,13 @@ int main (int argc, char* argv[])
 {
 	// Initialization
 	RCCInit();
-	//TM_HD44780_Init(16, 2);
-	EnableTimerInterrupt();
+	TM_HD44780_Init(16, 2);
+	EnableADCInterrupt();
 	GPIOInit();
-	//GPIO_ResetBits(GPIOA, GPIO_Pin_3);
 	TimerInit();
 	ADCInit();
 	DACInit();
-	//init_pots();
+	init_pots();
 
 	// TODO: move this somewhere more appropriate, make names configurable
 	/*
@@ -62,7 +61,7 @@ int main (int argc, char* argv[])
 	TM_HD44780_Puts(12, 0, "DDD:");
 	*/
 
-	//GPIO_SetBits(GPIOA, GPIO_Pin_3);
+	GPIO_SetBits(GPIOA, GPIO_Pin_3);
 
 	while (1)
 	{
@@ -160,13 +159,6 @@ void GPIOInit(void)
 	GPIO_init_structure.GPIO_Mode = GPIO_Mode_AN;
 	GPIO_init_structure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init(GPIOA, &GPIO_init_structure);
-
-	// init complete pin
-	GPIO_StructInit(&GPIO_init_structure);
-	GPIO_init_structure.GPIO_Pin =  GPIO_Pin_1;// A3
-	GPIO_init_structure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_init_structure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init(GPIOA, &GPIO_init_structure);
 }
 
 //Function for setting up the timer
@@ -174,26 +166,9 @@ void TimerInit(void)
 {
 	TIM_TimeBaseInitTypeDef TIM3_TimeBase;
 	TIM_TimeBaseStructInit(&TIM3_TimeBase);
-	// TODO: remove unused speeds or make configurable with an enum
 
-	// going for it
-  //TIM3_TimeBase.TIM_Period        = (uint16_t)1;  // Trigger = CK_CNT/(Period+1) = 21 MHz
-  //TIM3_TimeBase.TIM_Prescaler     = 1;          	  // CK_CNT = 42MHz/Prescaler = 42 Mhz
-
-	//TIM3_TimeBase.TIM_Period        = (uint16_t)209;  // Trigger = CK_CNT/(Period+1) = 200 kHz
-	//TIM3_TimeBase.TIM_Prescaler     = 0;          	  // CK_CNT = 42MHz/Prescaler = 42 Mhz
-//
-//	TIM3_TimeBase.TIM_Period        = (uint16_t)61;   // Trigger = CK_CNT/(Period+1) = 96.774 kHz
-//	TIM3_TimeBase.TIM_Prescaler     = 7;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
-//
-	//TIM3_TimeBase.TIM_Period        = (uint16_t)124;  // Trigger = CK_CNT/(Period+1) = 48 kHz
-	//TIM3_TimeBase.TIM_Prescaler     = 6;          	  // CK_CNT = 42MHz/(Prescaler+1) = 6 Mhz
-//
-//	TIM3_TimeBase.TIM_Period        = (uint16_t)135; // Trigger = CK_CNT/(Period+1) = 44.117 kHz
-//	TIM3_TimeBase.TIM_Prescaler     = 7;          	  // CK_CNT = 42MHz/Prescaler = 6 Mhz
-
-	TIM3_TimeBase.TIM_Period        = (uint16_t)15;  // Trigger = CK_CNT/(Period+1) = 48 kHz
-	TIM3_TimeBase.TIM_Prescaler     = 3;          	  // CK_CNT = 42MHz/(Prescaler+1) = 6 Mhz
+	TIM3_TimeBase.TIM_Period        = (uint16_t)15;
+	TIM3_TimeBase.TIM_Prescaler     = 3;
 
 	TIM3_TimeBase.TIM_ClockDivision = 0;
 	TIM3_TimeBase.TIM_CounterMode   = TIM_CounterMode_Up;
@@ -212,11 +187,10 @@ void TimerInit(void)
 }
 
 //Function to enable interrupts for the timer
-void EnableTimerInterrupt(void)
+void EnableADCInterrupt(void)
 {
-    NVIC_InitTypeDef nvicStructure;
-
 	// enable all ADCS to be triggered
+    NVIC_InitTypeDef nvicStructure;
     nvicStructure.NVIC_IRQChannel    = ADC_IRQn;
     nvicStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&nvicStructure);
@@ -225,8 +199,8 @@ void EnableTimerInterrupt(void)
 // interrupt where ADC read, DAC write occurs
 void ADC_IRQHandler(void)
 {
-  DAC_SetChannel1Data(DAC_Align_12b_R, delay( ADC_GetConversionValue(ADC1) ) );
-  //DAC_SetChannel1Data(DAC_Align_12b_R, overdrive( ADC_GetConversionValue(ADC1) ) );
+  //DAC_SetChannel1Data(DAC_Align_12b_R, delay( ADC_GetConversionValue(ADC1) ) );
+  DAC_SetChannel1Data(DAC_Align_12b_R, overdrive( ADC_GetConversionValue(ADC1) ) );
   //DAC_SetChannel1Data(DAC_Align_12b_R, ADC_GetConversionValue(ADC1) );
   ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 }
@@ -242,11 +216,9 @@ uint16_t delay(uint16_t currSamp)
     float prev = (float)delayBuff[buffInd];
     float curr = (float)currSamp;
 	delayBuff[buffInd] = (uint16_t)((feedback_degree * prev) + ((1-feedback_degree) * curr));
-    //uint16_t ret = delayBuff[buffInd];
 
     uint16_t ret = (uint16_t)((mix * delayBuff[buffInd]) + ((1-mix) * curr));
 
-    //if you want to cut down the buffer size, change from BUFF_SIZE to the new buffer size
     buffInd = (buffInd+1) % BUFF_SIZE; //move to next buffer spot
 
     return ret;
@@ -255,7 +227,6 @@ uint16_t delay(uint16_t currSamp)
 
 uint16_t overdrive(uint16_t currSamp) {
 	return (2*overdrive_lut[currSamp]/3) + (1*currSamp/3) ;
-	//return currSamp;
 }
 
 
@@ -346,8 +317,8 @@ void init_pots(void) {
 	ADC_InitStruct.ADC_Resolution = ADC_Resolution_12b;//Input voltage is converted into a 12bit int (max 4095)
 	ADC_InitStruct.ADC_ScanConvMode = ENABLE;//The scan is configured in multiple channels
 	ADC_InitStruct.ADC_ContinuousConvMode = ENABLE;//Continuous conversion: input signal is sampled more than once
-	ADC_InitStruct.ADC_ExternalTrigConv = 0;
 	ADC_InitStruct.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	ADC_InitStruct.ADC_ExternalTrigConv = 0;
 	ADC_InitStruct.ADC_DataAlign = ADC_DataAlign_Right;//Data converted will be shifted to right
 	ADC_InitStruct.ADC_NbrOfConversion = 5;
 	ADC_Init(ADC3, &ADC_InitStruct);//Initialize ADC with the configuration
@@ -362,16 +333,18 @@ void init_pots(void) {
 	/* Enable DMA request after last transfer (Single-ADC mode) */
 	ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);
 
+	/* Enable ADC3 */
+	ADC_Cmd(ADC3, ENABLE);
+
 	/* Enable ADC3 DMA */
 	ADC_DMACmd(ADC3, ENABLE);
 
-	/* Enable ADC3 */
-	ADC_Cmd(ADC3, ENABLE);
+
 	// TODO disable ADC3 from triggering interrupt and messing with audio processing?
-	//ADC_ITConfig(ADC3, ADC_IT_EOC, DISABLE);
+	ADC_ITConfig(ADC3, ADC_IT_EOC, DISABLE);
 	//ADC_ITConfig(ADC3, ADC_IT_AWD, DISABLE);
 	//ADC_ITConfig(ADC3, ADC_IT_JEOC, DISABLE);
-	ADC_ITConfig(ADC3, ADC_IT_OVR, DISABLE);
+	//ADC_ITConfig(ADC3, ADC_IT_OVR, DISABLE);
 
 
 	/* Start ADC3 Software Conversion */
