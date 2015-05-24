@@ -30,11 +30,9 @@ void display_pots(void);
 // effects
 uint16_t delay(uint16_t);
 uint16_t overdrive(uint16_t);
+uint16_t LPF(uint16_t);
 
 /* for delay effect test*/
-//#define FS 48000
-//#define DEL_TIME 250 // ms
-//#define BUFF_SIZE ((FS*DEL_TIME)/1000)
 #define BUFF_SIZE 60000
 uint16_t delayBuff[BUFF_SIZE];
 
@@ -45,13 +43,13 @@ int main (int argc, char* argv[])
 {
 	// Initialization
 	RCCInit();
-	TM_HD44780_Init(16, 2);
+	//TM_HD44780_Init(16, 2);
 	EnableADCInterrupt();
 	GPIOInit();
 	TimerInit();
 	ADCInit();
 	DACInit();
-	init_pots();
+	//init_pots();
 
 	// TODO: move this somewhere more appropriate, make names configurable
 	/*
@@ -60,8 +58,6 @@ int main (int argc, char* argv[])
 	TM_HD44780_Puts(8, 0, "CCC:");
 	TM_HD44780_Puts(12, 0, "DDD:");
 	*/
-
-	GPIO_SetBits(GPIOA, GPIO_Pin_3);
 
 	while (1)
 	{
@@ -169,7 +165,6 @@ void TimerInit(void)
 
 	TIM3_TimeBase.TIM_Period        = (uint16_t)15;
 	TIM3_TimeBase.TIM_Prescaler     = 3;
-
 	TIM3_TimeBase.TIM_ClockDivision = 0;
 	TIM3_TimeBase.TIM_CounterMode   = TIM_CounterMode_Up;
 	TIM_TimeBaseInit(TIM3, &TIM3_TimeBase);
@@ -201,7 +196,7 @@ void ADC_IRQHandler(void)
 {
   //DAC_SetChannel1Data(DAC_Align_12b_R, delay( ADC_GetConversionValue(ADC1) ) );
   DAC_SetChannel1Data(DAC_Align_12b_R, overdrive( ADC_GetConversionValue(ADC1) ) );
-  //DAC_SetChannel1Data(DAC_Align_12b_R, ADC_GetConversionValue(ADC1) );
+  //DAC_SetChannel1Data(DAC_Align_12b_R, ADC_GetConversionValue(ADC1) ); // pipe through
   ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 }
 
@@ -230,6 +225,11 @@ uint16_t overdrive(uint16_t currSamp) {
 }
 
 
+uint16_t LPF(uint16_t currSamp) {
+
+
+}
+
 // Function for intializing the ADC
 void ADCInit(void)
 {
@@ -246,8 +246,8 @@ void ADCInit(void)
 	ADC_INIT.ADC_Resolution           = ADC_Resolution_12b;
 	ADC_INIT.ADC_ScanConvMode         = DISABLE;
 	ADC_INIT.ADC_ContinuousConvMode   = DISABLE; // ENABLE for max ADC sampling frequency
-	ADC_INIT.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
 	ADC_INIT.ADC_ExternalTrigConv     = ADC_ExternalTrigConv_T3_TRGO;
+	ADC_INIT.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
 	ADC_INIT.ADC_DataAlign            = ADC_DataAlign_Right;
 	ADC_INIT.ADC_NbrOfConversion      = 1;
 	ADC_Init(ADC1, &ADC_INIT);
@@ -275,35 +275,13 @@ void DACInit(void)
 void init_pots(void) {
 	ADC_InitTypeDef ADC_InitStruct;
 	ADC_CommonInitTypeDef ADC_CommonInitStruct;
-	DMA_InitTypeDef DMA_InitStruct;
 	GPIO_InitTypeDef GPIO_InitStruct;
 
-	/* DMA2 Stream0 channel0 configuration */
-	DMA_InitStruct.DMA_Channel = DMA_Channel_2;
-	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)&ADC3->DR;//ADC3's data register
-	DMA_InitStruct.DMA_Memory0BaseAddr = (uint32_t)&pot;
-	DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralToMemory;
-	DMA_InitStruct.DMA_BufferSize = 5;
-	DMA_InitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-	DMA_InitStruct.DMA_MemoryInc = DMA_MemoryInc_Enable;
-	DMA_InitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;//Reads 16 bit values
-	DMA_InitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;//Stores 16 bit values
-	DMA_InitStruct.DMA_Mode = DMA_Mode_Circular;
-	DMA_InitStruct.DMA_Priority = DMA_Priority_High;
-	DMA_InitStruct.DMA_FIFOMode = DMA_FIFOMode_Disable;
-	DMA_InitStruct.DMA_FIFOThreshold = DMA_FIFOThreshold_HalfFull;
-	DMA_InitStruct.DMA_MemoryBurst = DMA_MemoryBurst_Single;
-	DMA_InitStruct.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-	DMA_Init(DMA2_Stream0, &DMA_InitStruct);
-	DMA_Cmd(DMA2_Stream0, ENABLE);
-
 	/* Configure GPIO pins */
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;// PC0, PC1, PC2, PC3
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;// PC0
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AN;//The pins are configured in analog mode
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL ;//We don't need any pull up or pull down
 	GPIO_Init(GPIOC, &GPIO_InitStruct);//Initialize GPIOC pins with the configuration
-	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_0;//PA0
-	GPIO_Init(GPIOA, &GPIO_InitStruct);//Initialize GPIOA pins with the configuration
 
 	/* ADC Common Init */
 	ADC_CommonInitStruct.ADC_Mode = ADC_Mode_Independent;
@@ -325,30 +303,10 @@ void init_pots(void) {
 
 	/* Select the channels to be read from */
 	ADC_RegularChannelConfig(ADC3, ADC_Channel_10, 1, ADC_SampleTime_144Cycles);//PC0
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_11, 2, ADC_SampleTime_144Cycles);//PC1
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_12, 3, ADC_SampleTime_144Cycles);//PC2
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_13, 4, ADC_SampleTime_144Cycles);//PC3
-	ADC_RegularChannelConfig(ADC3, ADC_Channel_0, 5, ADC_SampleTime_144Cycles);//PA0
-
-	/* Enable DMA request after last transfer (Single-ADC mode) */
-	ADC_DMARequestAfterLastTransferCmd(ADC3, ENABLE);
 
 	/* Enable ADC3 */
 	ADC_Cmd(ADC3, ENABLE);
 
-	/* Enable ADC3 DMA */
-	ADC_DMACmd(ADC3, ENABLE);
-
-
-	// TODO disable ADC3 from triggering interrupt and messing with audio processing?
-	ADC_ITConfig(ADC3, ADC_IT_EOC, DISABLE);
-	//ADC_ITConfig(ADC3, ADC_IT_AWD, DISABLE);
-	//ADC_ITConfig(ADC3, ADC_IT_JEOC, DISABLE);
-	//ADC_ITConfig(ADC3, ADC_IT_OVR, DISABLE);
-
-
-	/* Start ADC3 Software Conversion */
-	ADC_SoftwareStartConv(ADC3);
 }
 
 
