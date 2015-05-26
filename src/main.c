@@ -30,7 +30,6 @@ void display_pots(void);
 // effects
 uint16_t delay(uint16_t);
 uint16_t overdrive(uint16_t);
-uint16_t LPF(uint16_t);
 
 /* for delay effect test*/
 #define BUFF_SIZE 60000
@@ -222,12 +221,6 @@ uint16_t delay(uint16_t currSamp)
 
 uint16_t overdrive(uint16_t currSamp) {
 	return (2*overdrive_lut[currSamp]/3) + (1*currSamp/3) ;
-}
-
-
-uint16_t LPF(uint16_t currSamp) {
-
-
 }
 
 // Function for intializing the ADC
